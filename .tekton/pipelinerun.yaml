@@ -15,14 +15,7 @@ spec:
     - name: app-name
       value: "cicd-final-project"
     - name: image-name
-      value: "image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/cicd-final-project:latest"
+      value: "image-registry.openshift-image-registry.svc:5000/sn-labs-u422004478/cicd-final-project:latest"
   workspaces:
     - name: pipeline-workspace
-      volumeClaimTemplate:
-        spec:
-          accessModes:
-            - ReadWriteOnce
-          resources:
-            requests:
-              storage: 1Gi
-
+      emptyDir: {}
