@@ -74,4 +74,3 @@ class TestCountRoute:
         data = response.get_json()
         assert "count" in data
         assert isinstance(data["count"], int)
-
