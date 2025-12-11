@@ -1,0 +1,28 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: cicd-pipeline-run-
+  labels:
+    app.kubernetes.io/version: "1.0"
+spec:
+  pipelineRef:
+    name: cicd-pipeline
+  params:
+    - name: repo-url
+      value: "https://github.com/randelortega01/finalproject.git"
+    - name: branch
+      value: "main"
+    - name: app-name
+      value: "cicd-final-project"
+    - name: image-name
+      value: "image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/cicd-final-project:latest"
+  workspaces:
+    - name: pipeline-workspace
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+

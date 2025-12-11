@@ -1,0 +1,102 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: cicd-pipeline
+  labels:
+    app.kubernetes.io/version: "1.0"
+  annotations:
+    tekton.dev/displayName: "CI/CD Pipeline"
+spec:
+  description: >-
+    This pipeline clones the repository, runs linting, executes unit tests,
+    builds the container image, and deploys to OpenShift
+  params:
+    - name: repo-url
+      description: The Git repository URL
+      type: string
+    - name: branch
+      description: The branch to build
+      type: string
+      default: "main"
+    - name: app-name
+      description: The name of the application
+      type: string
+      default: "cicd-final-project"
+    - name: image-name
+      description: The name of the image to build
+      type: string
+    - name: build-image
+      description: The image to use for build steps
+      type: string
+      default: "python:3.11-slim"
+  workspaces:
+    - name: pipeline-workspace
+      description: Workspace for the pipeline
+  tasks:
+    # Task 1: Clone the repository
+    - name: clone
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      workspaces:
+        - name: output
+          workspace: pipeline-workspace
+      params:
+        - name: url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.branch)
+        - name: deleteExisting
+          value: "true"
+
+    # Task 2: Run linting
+    - name: lint
+      taskRef:
+        name: lint
+      runAfter:
+        - clone
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      params:
+        - name: image
+          value: $(params.build-image)
+
+    # Task 3: Run unit tests
+    - name: tests
+      taskRef:
+        name: tests
+      runAfter:
+        - lint
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      params:
+        - name: image
+          value: $(params.build-image)
+
+    # Task 4: Build container image
+    - name: build
+      taskRef:
+        name: buildah
+      runAfter:
+        - tests
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      params:
+        - name: IMAGE
+          value: $(params.image-name)
+
+    # Task 5: Deploy to OpenShift
+    - name: deploy
+      taskRef:
+        name: deploy
+      runAfter:
+        - build
+      params:
+        - name: IMAGE
+          value: $(params.image-name)
+        - name: APP_NAME
+          value: $(params.app-name)
+

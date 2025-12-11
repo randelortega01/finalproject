@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cicd-final-project
+  labels:
+    app: cicd-final-project
+    app.kubernetes.io/name: cicd-final-project
+    app.kubernetes.io/version: "1.0.0"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cicd-final-project
+  template:
+    metadata:
+      labels:
+        app: cicd-final-project
+    spec:
+      containers:
+        - name: cicd-final-project
+          image: image-registry.openshift-image-registry.svc:5000/$(NAMESPACE)/cicd-final-project:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5
+

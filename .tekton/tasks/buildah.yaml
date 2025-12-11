@@ -1,0 +1,82 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: buildah
+  labels:
+    app.kubernetes.io/version: "1.0"
+  annotations:
+    tekton.dev/displayName: "Buildah Build and Push Task"
+    tekton.dev/pipelines.minVersion: "0.17.0"
+spec:
+  description: >-
+    This task builds a container image using Buildah and pushes it to a registry
+  workspaces:
+    - name: source
+      description: The workspace containing the source code and Dockerfile
+  params:
+    - name: IMAGE
+      description: Reference of the image to build and push
+      type: string
+    - name: DOCKERFILE
+      description: Path to the Dockerfile
+      type: string
+      default: "./Dockerfile"
+    - name: CONTEXT
+      description: Path to the build context
+      type: string
+      default: "."
+    - name: TLSVERIFY
+      description: Verify TLS on the registry endpoint
+      type: string
+      default: "false"
+    - name: FORMAT
+      description: The format of the built container (oci or docker)
+      type: string
+      default: "oci"
+    - name: BUILD_EXTRA_ARGS
+      description: Extra arguments for buildah build
+      type: string
+      default: ""
+    - name: PUSH_EXTRA_ARGS
+      description: Extra arguments for buildah push
+      type: string
+      default: ""
+  results:
+    - name: IMAGE_DIGEST
+      description: Digest of the image built
+  steps:
+    - name: build
+      image: quay.io/buildah/stable:v1.31.0
+      workingDir: $(workspaces.source.path)
+      securityContext:
+        privileged: true
+      script: |
+        #!/bin/bash
+        set -e
+        echo "Building container image..."
+        buildah --storage-driver=vfs bud \
+          $(params.BUILD_EXTRA_ARGS) \
+          --format=$(params.FORMAT) \
+          --tls-verify=$(params.TLSVERIFY) \
+          -f $(params.DOCKERFILE) \
+          -t $(params.IMAGE) \
+          $(params.CONTEXT)
+        echo "Build completed successfully!"
+    - name: push
+      image: quay.io/buildah/stable:v1.31.0
+      workingDir: $(workspaces.source.path)
+      securityContext:
+        privileged: true
+      script: |
+        #!/bin/bash
+        set -e
+        echo "Pushing container image..."
+        buildah --storage-driver=vfs push \
+          $(params.PUSH_EXTRA_ARGS) \
+          --tls-verify=$(params.TLSVERIFY) \
+          --digestfile=/tmp/image-digest \
+          $(params.IMAGE) \
+          docker://$(params.IMAGE)
+        cat /tmp/image-digest | tee $(results.IMAGE_DIGEST.path)
+        echo "Push completed successfully!"
+

@@ -1,0 +1,17 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: cicd-final-project
+  labels:
+    app: cicd-final-project
+spec:
+  to:
+    kind: Service
+    name: cicd-final-project
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+

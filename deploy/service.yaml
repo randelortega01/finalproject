@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cicd-final-project
+  labels:
+    app: cicd-final-project
+spec:
+  type: ClusterIP
+  selector:
+    app: cicd-final-project
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+

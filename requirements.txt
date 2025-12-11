@@ -1,0 +1,12 @@
+# Application dependencies
+Flask==2.3.3
+gunicorn==21.2.0
+
+# Testing dependencies
+pytest==7.4.2
+pytest-cov==4.1.0
+
+# Linting dependencies
+flake8==6.1.0
+pylint==2.17.5
+
